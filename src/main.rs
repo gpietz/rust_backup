@@ -13,13 +13,14 @@ mod prelude {
 }
 
 use prelude::*;
+use std::error::Error;
 
-fn main() {
-    println!("**** RUST BACKUP v0.1 ****");
+fn main() -> Result<(), Box<dyn Error>> {
+    println!("**** RUST BACKUP v0.2 ****");
 
     let mut cli_args = CliArgs::create();
     if !cli_args.validate() {
-        return;
+        return Err("Missing something!".into());
     }
     cli_args.load_target_path();
 
@@ -28,4 +29,5 @@ fn main() {
 
     let toml_reader = TomlReader::create(&cli_args);
     BackupCreator::create_backup(&cli_args, &backup_files, &toml_reader);
+    Ok(())
 }
