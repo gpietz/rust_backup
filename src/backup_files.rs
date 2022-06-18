@@ -63,11 +63,14 @@ impl BackupFiles {
     fn add_git_ignores(&mut self, path: &PathBuf) {
         let mut file_path = path.clone();
         file_path = file_path.join(".gitignore");
-      
+
+        //println!("Reading .gitignore file: {}", file_path.clone().to_str().unwrap());
         if let Ok(lines) = BackupFiles::read_lines(file_path.as_path()) {
             for line in lines {
-                if let Ok(mut entry) = line {
-                    if !entry.starts_with("#")  {
+                if let Ok(entry) = line {
+                    let mut entry = entry.trim().to_string();
+                    if !entry.starts_with("#") && entry.len() > 0 {
+                        //println!("DEBUG: {} ({})", entry, entry.len());
                         entry = BackupFiles::remove_first(&entry).unwrap().to_string();
                         let mut ignore_path = path.clone();
                         ignore_path.push(PathBuf::from_str(&entry).unwrap());
