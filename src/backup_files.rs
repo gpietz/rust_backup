@@ -1,21 +1,21 @@
-use std::path::{Path, PathBuf};
 use std::fs::{self, File};
 use std::io::{self, BufRead};
+use std::path::{Path, PathBuf};
 use std::str::FromStr;
-use system_extensions::metadata::attribute::{Attributes, has_attribute};
+use system_extensions::metadata::attribute::{has_attribute, Attributes};
 
 use crate::prelude::*;
 
 pub struct BackupFiles {
     pub backup_files: Vec<PathBuf>,
-    pub git_ignores: Vec<PathBuf>
-} 
+    pub git_ignores: Vec<PathBuf>,
+}
 
 impl BackupFiles {
     pub fn create() -> Self {
         Self {
-            backup_files : Vec::new(),
-            git_ignores : Vec::new()
+            backup_files: Vec::new(),
+            git_ignores: Vec::new(),
         }
     }
 
@@ -29,9 +29,10 @@ impl BackupFiles {
         for entry in fs::read_dir(path).unwrap() {
             let entry = entry.unwrap();
             let entry_path = entry.path();
-            if self.is_entry_hidden(&entry_path) 
-                || self.is_git_ignore(&entry_path) 
-                || self.is_rustbackup(&entry_path) {
+            if self.is_entry_hidden(&entry_path)
+                || self.is_git_ignore(&entry_path)
+                || self.is_rustbackup(&entry_path)
+            {
                 continue;
             }
             if entry_path.is_dir() {
@@ -42,24 +43,24 @@ impl BackupFiles {
             }
         }
     }
-    
+
     fn add_file(&mut self, path: &PathBuf) {
         if self.ignore_file(&path) {
             return;
         }
         self.backup_files.push(path.clone());
         //println!("Added backup file: {}", path.clone().into_os_string().into_string().unwrap());
-    }    
+    }
 
     fn ignore_file(&self, path: &PathBuf) -> bool {
         for ignored_path in self.git_ignores.iter() {
             if path.starts_with(ignored_path) {
                 return true;
             }
-        }       
-        return false; 
+        }
+        return false;
     }
-    
+
     fn add_git_ignores(&mut self, path: &PathBuf) {
         let mut file_path = path.clone();
         file_path = file_path.join(".gitignore");
@@ -78,12 +79,14 @@ impl BackupFiles {
                         //println!("Adding gitignore: {}", ignore_path.into_os_string().into_string().unwrap());
                     }
                 }
-            }   
+            }
         }
     }
 
     fn read_lines<P>(filename: P) -> io::Result<io::Lines<io::BufReader<File>>>
-    where P: AsRef<Path>, {
+    where
+        P: AsRef<Path>,
+    {
         let file = File::open(filename)?;
         Ok(io::BufReader::new(file).lines())
     }

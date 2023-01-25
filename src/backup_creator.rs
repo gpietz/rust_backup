@@ -1,11 +1,11 @@
+use chrono::{Datelike, Local, Timelike};
 use std::env;
 use std::fs::File;
 use std::io::Read;
 use std::io::Write;
 use std::path::Path;
-use chrono::{Datelike, Timelike, Local};
 use zip::write::FileOptions;
-use zip::{self, ZipWriter, CompressionMethod};
+use zip::{self, CompressionMethod, ZipWriter};
 
 use crate::prelude::*;
 
@@ -25,7 +25,13 @@ impl BackupCreator {
 
         // Get target directory depending on cli arguments
         let target_path = if cli_args.target_path.is_some() {
-            cli_args.target_path.clone().unwrap().to_str().unwrap().to_string()
+            cli_args
+                .target_path
+                .clone()
+                .unwrap()
+                .to_str()
+                .unwrap()
+                .to_string()
         } else {
             env::current_dir().unwrap().to_str().unwrap().to_string()
         };
@@ -33,8 +39,16 @@ impl BackupCreator {
         // Combine target directory with backup filename
         let backup_path = Path::new(target_path.as_str());
         let backup_path = backup_path.join(&backup_file_name);
-        
-        println!("Generating backup file: {}", backup_path.to_str().unwrap());
+
+        if cli_args.list_mode {
+            println!("Suggested backup file: {}", backup_path.to_str().unwrap());
+            for backup_file in backup_files.backup_files.iter() {
+                println!("Adding file: {}", backup_file.to_str().unwrap());
+            }
+            return;
+        } else {
+            println!("Generating backup file: {}", backup_path.to_str().unwrap());
+        }
 
         let path = Path::new(backup_path.as_path());
         let backup_file = File::create(path).unwrap();
@@ -44,7 +58,7 @@ impl BackupCreator {
             .unix_permissions(0o755);
 
         let mut zip = ZipWriter::new(backup_file);
-        let mut dir_names : Vec<String> = Vec::new();
+        let mut dir_names: Vec<String> = Vec::new();
         let mut buffer = Vec::new();
         for backup_file in backup_files.backup_files.iter() {
             println!("Storing file: {}", backup_file.to_str().unwrap());
@@ -52,7 +66,13 @@ impl BackupCreator {
             let mut file = File::open(backup_file).unwrap();
             file.read_to_end(&mut buffer).unwrap();
 
-            let dir = backup_file.parent().unwrap().as_os_str().to_str().unwrap().to_string();
+            let dir = backup_file
+                .parent()
+                .unwrap()
+                .as_os_str()
+                .to_str()
+                .unwrap()
+                .to_string();
             if !dir.is_empty() && dir_names.contains(&dir) {
                 dir_names.push(dir.clone());
                 zip.add_directory(&dir, options).unwrap();
@@ -63,17 +83,24 @@ impl BackupCreator {
             file_name = file_name.slice(cli_args.project_path.as_str().len()..);
 
             // Write data to zip container
-            #[allow(deprecated)]
             zip.start_file(file_name, options).unwrap();
             zip.write_all(&*buffer).unwrap();
             buffer.clear();
         }
-        
+
         zip.finish().unwrap();
     }
 
     fn get_formatted_datetime() -> String {
         let now = Local::now();
-        format!("{}{:02}{:02}-{:02}{:02}{:02}", now.year(), now.month(), now.day(), now.hour(), now.minute(), now.second())
+        format!(
+            "{}{:02}{:02}-{:02}{:02}{:02}",
+            now.year(),
+            now.month(),
+            now.day(),
+            now.hour(),
+            now.minute(),
+            now.second()
+        )
     }
 }

@@ -1,22 +1,24 @@
-mod cli_args;
 mod backup_creator;
 mod backup_files;
-mod toml_reader;
+mod cli_args;
 mod string_utils;
+mod toml_reader;
 
 mod prelude {
-    pub use crate::cli_args::*;
     pub use crate::backup_creator::*;
     pub use crate::backup_files::*;
-    pub use crate::toml_reader::*;
+    pub use crate::cli_args::*;
     pub use crate::string_utils::*;
+    pub use crate::toml_reader::*;
 }
 
 use prelude::*;
 use std::error::Error;
 
+const VERSION: &str = env!("CARGO_PKG_VERSION");
+
 fn main() -> Result<(), Box<dyn Error>> {
-    println!("**** RUST BACKUP v0.2 ****");
+    println!("**** RUST BACKUP v{VERSION} ****");
 
     let mut cli_args = CliArgs::create();
     if !cli_args.validate() {

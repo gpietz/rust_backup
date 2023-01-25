@@ -7,38 +7,14 @@ pub trait StringUtils {
 
 impl StringUtils for str {
     fn substring(&self, start: usize, len: usize) -> &str {
-        let mut char_pos = 0;
-        let mut byte_start = 0;
-        let mut it = self.chars();
-        loop {
-            if char_pos == start {
-                break;
-            }
-            if let Some(c) = it.next() {
-                char_pos += 1;
-                byte_start += c.len_utf8();
-            }
-            else {
-                break;
-            }
+        let mut byte_end = start + len;
+        if start >= self.len() {
+            return "";
         }
-
-        char_pos = 0;
-        let mut byte_end = byte_start;
-        loop {
-            if char_pos == len { 
-                break; 
-            }
-            if let Some(c) = it.next() {
-                char_pos += 1;
-                byte_end += c.len_utf8();
-            }
-            else { 
-                break; 
-            }
+        if byte_end >= self.len() {
+            byte_end = self.len();
         }
-
-        &self[byte_start..byte_end]
+        &self[start..byte_end]
     }
 
     fn slice(&self, range: impl RangeBounds<usize>) -> &str {
@@ -53,4 +29,27 @@ impl StringUtils for str {
         } - start;
         self.substring(start, len)
     }
+}
+
+#[test]
+fn test_substring() {
+    let s = "Hello, World!";
+    assert_eq!(s.substring(0, 5), "Hello");
+    assert_eq!(s.substring(7, 5), "World");
+    assert_eq!(s.substring(7, 100), "World!");
+    assert_eq!(s.substring(0, 0), "");
+    assert_eq!(s.substring(100, 0), "");
+}
+
+#[test]
+fn test_slice() {
+    let s = "Hello, World!";
+    let slice = s.slice(..5);
+    assert_eq!(slice, "Hello");
+    let slice = s.slice(7..);
+    assert_eq!(slice, "World!");
+    let slice = s.slice(7..12);
+    assert_eq!(slice, "World");
+    let slice = s.slice(..);
+    assert_eq!(slice, "Hello, World!");
 }
