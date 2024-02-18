@@ -27,7 +27,7 @@ pub struct CliArgs {
     #[structopt(short = "l", long = "list")]
     pub list_mode: bool,
 
-    #[structopt(short = "b", long = "verbose")]
+    #[structopt(short = "v", long = "verbose")]
     pub verbose: bool,
 }
 
