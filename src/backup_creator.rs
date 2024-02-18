@@ -1,3 +1,4 @@
+use crate::dir_entry_status::{check_dir_entry_status, DirEntryStatus};
 use chrono::{Datelike, Local, Timelike};
 use std::env;
 use std::fs::File;
@@ -12,11 +13,7 @@ use crate::prelude::*;
 pub struct BackupCreator {}
 
 impl BackupCreator {
-    pub fn create_backup(
-        cli_args: &CliArgs,
-        backup_files: &Vec<PathBuf>,
-        toml_reader: &TomlReader,
-    ) {
+    pub fn create_backup(cli_args: &CliArgs, backup_files: &[PathBuf], toml_reader: &TomlReader) {
         // Create filename for backup file
         let mut backup_file_name = toml_reader.name.to_string();
         if !toml_reader.version.is_empty() {
@@ -65,7 +62,13 @@ impl BackupCreator {
         let mut dir_names: Vec<String> = Vec::new();
         let mut buffer = Vec::new();
         for backup_file in backup_files.iter() {
-            println!("Storing file: {}", backup_file.display());
+            // TODO Function is used twice for each file entry
+            let status = check_dir_entry_status(backup_file);
+            if status != DirEntryStatus::HiddenFile && status != DirEntryStatus::File {
+                continue;
+            }
+
+            println!("Storing file: {:?}", backup_file.display());
 
             let mut file = File::open(backup_file).unwrap();
             file.read_to_end(&mut buffer).unwrap();
@@ -82,8 +85,6 @@ impl BackupCreator {
                 zip.add_directory(&dir, options).unwrap();
             }
 
-            //FIXME The slice method should be added again!
-            // Create container file name
             let mut file_name = backup_file.to_str().unwrap();
             file_name = file_name.slice(cli_args.root_path.as_str().len()..);
 

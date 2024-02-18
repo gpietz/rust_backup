@@ -1,6 +1,6 @@
 use crate::dir_entry_status::{check_dir_entry_status, DirEntryStatus};
 use ignore::WalkBuilder;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 pub(crate) struct FileCollector {
     root_path: PathBuf,
@@ -26,23 +26,25 @@ impl FileCollector {
             match result {
                 Ok(dir_entry) => {
                     let path = dir_entry.path();
-                    let status = check_dir_entry_status(path);
-                    match status {
-                        DirEntryStatus::HiddenDirectory => {
-                            if !include_hidden {
-                                hidden_dirs.push(path.to_path_buf())
+                    if is_valid_name(path) {
+                        let status = check_dir_entry_status(path);
+                        match status {
+                            DirEntryStatus::HiddenDirectory => {
+                                if !include_hidden {
+                                    hidden_dirs.push(path.to_path_buf())
+                                }
                             }
-                        }
-                        DirEntryStatus::Directory | DirEntryStatus::File => {
-                            if include_hidden
-                                || !hidden_dirs
-                                    .iter()
-                                    .any(|hidden_dir| path.starts_with(hidden_dir))
-                            {
-                                files.push(path.to_path_buf());
+                            DirEntryStatus::Directory | DirEntryStatus::File => {
+                                if include_hidden
+                                    || !hidden_dirs
+                                        .iter()
+                                        .any(|hidden_dir| path.starts_with(hidden_dir))
+                                {
+                                    files.push(path.to_path_buf());
+                                }
                             }
+                            _ => {}
                         }
-                        _ => {}
                     }
                 }
                 Err(e) => {
@@ -53,4 +55,9 @@ impl FileCollector {
         }
         files
     }
+}
+
+fn is_valid_name(path: &Path) -> bool {
+    let path_str = path.to_str().unwrap_or("");
+    !path_str.is_empty() && path_str != "." && path_str != ".."
 }
